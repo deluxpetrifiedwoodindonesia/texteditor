@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Text Editor with Full Toolbar and Table Insert Feature</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+
+      #toolbar {
+        margin-bottom: 10px;
+      }
+
+      #toolbar select,
+      #toolbar button,
+      #toolbar input[type="color"] {
+        font-size: 16px;
+        padding: 5px;
+        margin-right: 5px;
+        cursor: pointer;
+      }
+
+      #editor {
+        width: 100%;
+        height: 300px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        background-color: #f9f9f9;
+        overflow-y: auto;
+      }
+
+      #counters {
+        margin-top: 10px;
+        font-size: 14px;
+      }
+
+      .resizable-wrapper {
+        display: inline-block;
+        position: relative;
+        margin: 10px 0;
+        clear: both;
+      }
+
+      img.resizable {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .resize-handle {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #008cba;
+        bottom: 0;
+        right: 0;
+        cursor: nwse-resize;
+      }
+
+      /* Alignment styles */
+      .align-left {
+        float: left;
+        margin-right: 10px;
+      }
+
+      .align-right {
+        float: right;
+        margin-left: 10px;
+      }
+
+      .align-center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .clear {
+        clear: both;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      label[for="uploadLocalImage"] {
+        cursor: pointer;
+        padding: 5px 10px;
+        background-color: #008cba;
+        color: white;
+        border-radius: 3px;
+        margin-left: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toolbar">
+      <!-- Font Style -->
+      <select id="fontName" onchange="formatText('fontName', this.value)">
+        <option value="Arial">Arial</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Verdana">Verdana</option>
+      </select>
+
+      <!-- Font Size in Pixels -->
+      <select id="fontSizePx" onchange="setFontSizePx(this.value)">
+        <option value="10px">10px</option>
+        <option value="12px">12px</option>
+        <option value="14px">14px</option>
+        <option value="16px" selected>16px (Default)</option>
+        <option value="18px">18px</option>
+        <option value="20px">20px</option>
+        <option value="24px">24px</option>
+        <option value="30px">30px</option>
+        <option value="36px">36px</option>
+      </select>
+
+      <!-- Heading Tool -->
+      <select id="heading" onchange="formatText('formatBlock', this.value)">
+        <option value="p">Paragraph</option>
+        <option value="h1">Heading 1</option>
+        <option value="h2">Heading 2</option>
+        <option value="h3">Heading 3</option>
+        <option value="h4">Heading 4</option>
+        <option value="h5">Heading 5</option>
+        <option value="h6">Heading 6</option>
+      </select>
+
+      <!-- Tab Paragraph -->
+      <select id="tab" onchange="setTab(this.value)">
+        <option value="">Tab Size</option>
+        <option value="2em">2em</option>
+        <option value="4em">4em</option>
+        <option value="6em">6em</option>
+        <option value="8em">8em</option>
+      </select>
+
+      <!-- Bold, Italic, Underline, Strike -->
+      <button onclick="formatText('bold')"><b>B</b></button>
+      <button onclick="formatText('italic')"><i>I</i></button>
+      <button onclick="formatText('underline')"><u>U</u></button>
+      <button onclick="formatText('strikeThrough')"><s>S</s></button>
+
+      <!-- Text Color -->
+      <input
+        type="color"
+        id="textColor"
+        onchange="formatText('foreColor', this.value)"
+      />
+
+      <!-- Background Color -->
+      <input
+        type="color"
+        id="backColor"
+        onchange="formatText('backColor', this.value)"
+        title="Background Color"
+      />
+
+      <!-- Alignment -->
+      <button onclick="alignImage('left')">Align Left</button>
+      <button onclick="alignImage('center')">Align Center</button>
+      <button onclick="alignImage('right')">Align Right</button>
+
+      <!-- Lists -->
+      <button onclick="formatText('insertOrderedList')">Ordered List</button>
+      <button onclick="formatText('insertUnorderedList')">
+        Unordered List
+      </button>
+
+      <!-- Links -->
+      <button onclick="createLink()">Insert Link</button>
+
+      <!-- Images -->
+      <button onclick="insertImage()">Insert Image via URL</button>
+      <label for="uploadLocalImage">Upload Image</label>
+      <input
+        type="file"
+        id="uploadLocalImage"
+        accept="image/*"
+        onchange="uploadLocalImage(event)"
+      />
+
+      <!-- Insert Symbol -->
+      <select id="insertSymbol" onchange="insertSymbol(this.value)">
+        <option value="">Insert Symbol</option>
+        <option value="●">Bullet (●)</option>
+        <option value="■">Square (■)</option>
+        <option value="▲">Triangle (▲)</option>
+        <option value="▼">Down Triangle (▼)</option>
+        <option value="✦">Star (✦)</option>
+        <option value="☼">Sun (☼)</option>
+        <option value="☻">Smiley Face (☻)</option>
+        <option value="☺">Happy Face (☺)</option>
+        <option value="✿">Flower (✿)</option>
+        <option value="✎">Pencil (✎)</option>
+        <option value="✈">Airplane (✈)</option>
+        <option value="✉">Envelope (✉)</option>
+        <option value="⚠">Warning (⚠)</option>
+        <option value="⚓">Anchor (⚓)</option>
+        <option value="☕">Coffee (☕)</option>
+      </select>
+
+      <!-- Insert Line -->
+      <button onclick="insertLine()">Insert Line</button>
+
+      <!-- Insert Table -->
+      <button onclick="insertTable()">Insert Table</button>
+
+      <!-- Undo & Redo -->
+      <button onclick="formatText('undo')">Undo</button>
+      <button onclick="formatText('redo')">Redo</button>
+
+      <!-- Reset Toolbar -->
+      <button onclick="resetToolbar()">Reset Toolbar</button>
+
+      <!-- Clear -->
+      <button onclick="clearContent()">Clear</button>
+    </div>
+
+    <div id="editor" contenteditable="true">Start typing here...</div>
+
+    <div id="counters">
+      <span id="charCount">Characters: 0</span> |
+      <span id="wordCount">Words: 0</span>
+    </div>
+
+    <script>
+      function formatText(command, value = null) {
+        document.execCommand(command, false, value);
+      }
+
+      function setFontSizePx(size) {
+        const selection = window.getSelection();
+        const selectedText = selection.toString();
+
+        if (selectedText) {
+          document.execCommand("fontSize", false, "7"); // Dummy size
+          const fontElements = document.querySelectorAll('font[size="7"]');
+          fontElements.forEach((font) => {
+            font.removeAttribute("size");
+            font.style.fontSize = size;
+          });
+        }
+      }
+
+      function setTab(size) {
+        if (size) {
+          document.execCommand("insertHTML", false, "&nbsp;&nbsp;&nbsp;&nbsp;"); // Add space as tab
+        }
+      }
+
+      function createLink() {
+        const url = prompt("Enter the URL");
+        if (url) {
+          formatText("createLink", url);
+        }
+      }
+
+      function insertImage() {
+        const imageUrl = prompt("Enter the image URL");
+        const altText = prompt("Enter alt text for the image");
+        const titleText = prompt("Enter title text for the image");
+        const captionText = prompt(
+          "Enter caption text for the image (optional)"
+        );
+
+        if (imageUrl) {
+          const imgTag = `<img src="${imageUrl}" alt="${altText}" title="${titleText}" class="resizable" style="max-width: 100%; height: auto;">`;
+          let imageWithCaption = imgTag;
+          if (captionText) {
+            imageWithCaption = `
+                        <figure>
+                            ${imgTag}
+                            <figcaption class="image-caption">${captionText}</figcaption>
+                        </figure>`;
+          }
+
+          document
+            .getElementById("editor")
+            .insertAdjacentHTML(
+              "beforeend",
+              wrapImageWithResize(imageWithCaption)
+            );
+          document
+            .getElementById("editor")
+            .insertAdjacentHTML("beforeend", "<p></p>"); // Add a new paragraph
+        }
+      }
+
+      function wrapImageWithResize(imageHTML) {
+        return `<div class="resizable-wrapper" contenteditable="false">
+                        ${imageHTML}
+                        <div class="resize-handle"></div>
+                    </div>`;
+      }
+
+      function uploadLocalImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const imageDataUrl = e.target.result;
+            const altText = prompt("Enter alt text for the image");
+            const titleText = prompt("Enter title text for the image");
+            const captionText = prompt(
+              "Enter caption text for the image (optional)"
+            );
+
+            const imgTag = `<img src="${imageDataUrl}" alt="${altText}" title="${titleText}" class="resizable" style="max-width: 100%; height: auto;">`;
+
+            let imageWithCaption = imgTag;
+            if (captionText) {
+              imageWithCaption = `
+                            <figure>
+                                ${imgTag}
+                                <figcaption class="image-caption">${captionText}</figcaption>
+                            </figure>`;
+            }
+
+            document
+              .getElementById("editor")
+              .insertAdjacentHTML(
+                "beforeend",
+                wrapImageWithResize(imageWithCaption)
+              );
+            document
+              .getElementById("editor")
+              .insertAdjacentHTML("beforeend", "<p></p>"); // Add a new paragraph
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+
+      function insertLine() {
+        document
+          .getElementById("editor")
+          .insertAdjacentHTML("beforeend", "<hr/>");
+      }
+
+      function insertSymbol(symbol) {
+        if (symbol) {
+          document.execCommand("insertText", false, symbol);
+          document.getElementById("insertSymbol").selectedIndex = 0; // Reset dropdown
+        }
+      }
+
+      function resetToolbar() {
+        const editor = document.getElementById("editor");
+        editor.innerHTML = "";
+        updateCounters();
+      }
+
+      function clearContent() {
+        const editor = document.getElementById("editor");
+        editor.innerHTML = "";
+        updateCounters();
+      }
+
+      function updateCounters() {
+        const textContent = document.getElementById("editor").textContent;
+        const charCount = textContent.length;
+        const wordCount = textContent
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean).length;
+
+        document.getElementById(
+          "charCount"
+        ).textContent = `Characters: ${charCount}`;
+        document.getElementById(
+          "wordCount"
+        ).textContent = `Words: ${wordCount}`;
+      }
+
+      function insertTable() {
+        const rows = prompt("Enter number of rows:");
+        const cols = prompt("Enter number of columns:");
+
+        if (rows && cols) {
+          let tableHTML =
+            '<table border="1" style="width: 100%; border-collapse: collapse;">';
+          for (let i = 0; i < rows; i++) {
+            tableHTML += "<tr>";
+            for (let j = 0; j < cols; j++) {
+              tableHTML += '<td style="padding: 8px;"></td>';
+            }
+            tableHTML += "</tr>";
+          }
+          tableHTML += "</table>";
+          document
+            .getElementById("editor")
+            .insertAdjacentHTML("beforeend", tableHTML);
+          document
+            .getElementById("editor")
+            .insertAdjacentHTML("beforeend", "<p></p>"); // Add a new paragraph
+        }
+      }
+
+      document
+        .getElementById("editor")
+        .addEventListener("input", updateCounters);
+      updateCounters(); // Initialize counters on page load
+
+      // Resize Image Functionality
+      document.addEventListener("mousedown", function (e) {
+        if (e.target.classList.contains("resize-handle")) {
+          const resizableWrapper = e.target.parentElement;
+          const img = resizableWrapper.querySelector("img");
+
+          const startX = e.clientX;
+          const startY = e.clientY;
+          const startWidth = parseInt(
+            document.defaultView.getComputedStyle(img).width,
+            10
+          );
+          const startHeight = parseInt(
+            document.defaultView.getComputedStyle(img).height,
+            10
+          );
+
+          function doDrag(e) {
+            img.style.width = startWidth + e.clientX - startX + "px";
+            img.style.height = startHeight + e.clientY - startY + "px";
+          }
+
+          function stopDrag() {
+            window.removeEventListener("mousemove", doDrag);
+            window.removeEventListener("mouseup", stopDrag);
+          }
+
+          window.addEventListener("mousemove", doDrag);
+          window.addEventListener("mouseup", stopDrag);
+        }
+      });
+    </script>
+  </body>
+</html>
